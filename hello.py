@@ -1,7 +1,8 @@
 from sys import exit, settrace, gettrace
 from pathlib import Path
+from types import FrameType
 
-# from os import get_terminal_size
+from os import get_terminal_size
 import inspect
 from datetime import datetime
 
@@ -17,10 +18,11 @@ from components.renderers.dict_table_renderer import DictTableRenderer
 debugger_state = {
     "mode": "continue",  # can be "step" or "continue"
     "user_dir": None,
+    "full_screen": False,
 }
 
 
-def is_user_frame(frame):
+def is_user_frame(frame: FrameType) -> bool:
     filename = Path(frame.f_code.co_filename).resolve()
     if ".venv" in str(filename):
         return False
@@ -32,41 +34,38 @@ def is_user_frame(frame):
     return True
 
 
-def local_trace(frame, event, arg):
-    if event == "line":
-        if not is_user_frame(frame):
-            return local_trace  # Skip stepping into debugger code
+def local_trace(frame: FrameType, event, arg):
+    if not is_user_frame(frame):
+        return local_trace  # Skip stepping into debugger code
 
+    if event == "line":
         dbgr(frame)
+    elif event == "call":
+        print(f"dbgr: Function call {frame.f_code.co_name}")
+    else:
+        print(f"dbgr: Event {event} in {frame.f_code.co_name}")
     return local_trace
 
 
 def global_trace(frame, event, arg):
+    if not is_user_frame(frame):
+        return global_trace  # Skip stepping into debugger code
+
     if event == "call":
+        dbgr(frame)
         return local_trace
     return None
 
 
-def dbgr(frame=None) -> None:
+def dbgr(frame: FrameType) -> None:
     trace_fn = gettrace()
     settrace(None)  # Temporarily disable to avoid recursion in dbgr
 
     source_lines = 20
 
-    if frame is None:
-        frame = inspect.currentframe()
-        if frame is None:
-            return
+    line_number = frame.f_lineno
+    path_to_file = Path(frame.f_code.co_filename)
 
-        f_back = frame.f_back
-        if f_back is None:
-            return
-
-    else:
-        f_back = frame
-
-    line_number = f_back.f_lineno
-    path_to_file = Path(f_back.f_code.co_filename)
     prev_line = (
         path_to_file.read_text().splitlines()[line_number - 2]
         if line_number > 1
@@ -78,9 +77,10 @@ def dbgr(frame=None) -> None:
         brp = True
 
     if brp:
-        # _, lines = get_terminal_size()
+        _, lines = get_terminal_size()
+        height = lines - 1 if debugger_state["full_screen"] else source_lines + 2
 
-        console = Console(height=source_lines + 3)
+        console = Console(height=height)
         layout = Layout(name="root")
         layout.split_row(
             Layout(name="left"),
@@ -95,7 +95,7 @@ def dbgr(frame=None) -> None:
         )
 
         locals_table = DictTableRenderer(
-            f_back.f_locals,
+            frame.f_locals,
             title="[bold]Local Variables",
             height=source_lines + 2,
             border_color="blue",
@@ -132,10 +132,10 @@ def dbgr(frame=None) -> None:
 
 
 def run_dbgr():
-    # Set the global trace function to start debugging
     stack = inspect.stack()
     caller_frame = stack[1]
     caller_file = caller_frame.filename
     debugger_state["user_dir"] = Path(caller_file).parent
 
+    # Set the global trace function to start debugging
     settrace(global_trace)

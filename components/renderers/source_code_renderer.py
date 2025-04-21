@@ -28,6 +28,10 @@ class SourceCodeRenderer:
         lines_on_top = (lines_for_code - 1) // 2
         lines_on_bottom = lines_for_code - 1 - lines_on_top
 
+        if (self.line_number - lines_on_top) < 1:
+            lines_on_top = self.line_number - 1
+            lines_on_bottom = lines_for_code - lines_on_top - 1
+
         syntax = Syntax(
             self.code,
             "python",

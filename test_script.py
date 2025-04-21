@@ -1,6 +1,7 @@
 from hello import run_dbgr
 
 
+# breakpoint
 def fun(z: int, mul: int) -> int:
     """This is a function that adds 1 to the input value z and returns it.
 
@@ -9,7 +10,7 @@ def fun(z: int, mul: int) -> int:
     z
         The input value to be incremented.
     mul
-
+        The multiplier to be applied to the incremented value.
 
     Returns
     -------
@@ -18,18 +19,17 @@ def fun(z: int, mul: int) -> int:
     """
     y: int = z + 1
     z = 0
-    # breakpoint
-    y = y * mul
-    y = y * mul
-    y = y * mul
-    # breakpoint
+    for i in range(3):
+        y = y * mul
     return y
 
 
+# breakpoint
 def main():
     result_a = fun(1, 2)
     result_b = fun(10, 20)
     print(result_a)
+    # breakpoint
     print(result_b)
 
 
