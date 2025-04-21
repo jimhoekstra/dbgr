@@ -46,4 +46,5 @@ class SourceCodeRenderer:
             border_style=f"bold {self.border_color}",
             title=f"File: [underline]{self.path_to_file.name}",
             height=height,
+            subtitle=f"{self.path_to_file}:{self.line_number}",
         )

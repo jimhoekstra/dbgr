@@ -1,4 +1,4 @@
-from hello import dbgr
+from hello import run_dbgr
 
 
 def fun(z: int, mul: int) -> int:
@@ -18,10 +18,21 @@ def fun(z: int, mul: int) -> int:
     """
     y: int = z + 1
     z = 0
-    dbgr()
+    # breakpoint
     y = y * mul
-    dbgr()
+    y = y * mul
+    y = y * mul
+    # breakpoint
     return y
 
 
-fun(1, 2)
+def main():
+    run_dbgr()
+    result_a = fun(1, 2)
+    result_b = fun(10, 20)
+    print(result_a)
+    print(result_b)
+
+
+if __name__ == "__main__":
+    main()
