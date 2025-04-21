@@ -16,17 +16,25 @@ from components.renderers.dict_table_renderer import DictTableRenderer
 # Global debugger state
 debugger_state = {
     "mode": "continue",  # can be "step" or "continue"
+    "user_dir": None,
 }
 
 
-def is_debugger_frame(frame):
+def is_user_frame(frame):
     filename = Path(frame.f_code.co_filename).resolve()
-    return "test_script.py" not in str(filename)
+    if ".venv" in str(filename):
+        return False
+
+    assert debugger_state["user_dir"] is not None, "User directory not set"
+    if not filename.is_relative_to(debugger_state["user_dir"]):
+        return False
+
+    return True
 
 
 def local_trace(frame, event, arg):
     if event == "line":
-        if is_debugger_frame(frame):
+        if not is_user_frame(frame):
             return local_trace  # Skip stepping into debugger code
 
         dbgr(frame)
@@ -40,6 +48,11 @@ def global_trace(frame, event, arg):
 
 
 def dbgr(frame=None) -> None:
+    trace_fn = gettrace()
+    settrace(None)  # Temporarily disable to avoid recursion in dbgr
+
+    source_lines = 20
+
     if frame is None:
         frame = inspect.currentframe()
         if frame is None:
@@ -67,7 +80,7 @@ def dbgr(frame=None) -> None:
     if brp:
         # _, lines = get_terminal_size()
 
-        console = Console(height=12)
+        console = Console(height=source_lines + 3)
         layout = Layout(name="root")
         layout.split_row(
             Layout(name="left"),
@@ -77,19 +90,16 @@ def dbgr(frame=None) -> None:
         syntax = SourceCodeRenderer(
             path_to_file,
             line_number,
-            max_lines=11,
+            max_lines=source_lines,
             border_color="blue",
         )
 
         locals_table = DictTableRenderer(
             f_back.f_locals,
             title="[bold]Local Variables",
-            height=13,
+            height=source_lines + 2,
             border_color="blue",
         )
-
-        trace_fn = gettrace()
-        settrace(None)  # Temporarily disable to avoid recursion in dbgr
 
         console.print(
             f"[yellow]{datetime.now()} dbgr: Encountered breakpoint",
@@ -101,26 +111,31 @@ def dbgr(frame=None) -> None:
 
         command = Prompt.ask(
             "[bold][yellow] >>>",
-            choices=["continue", "step", "exit"],
-            default="continue",
+            choices=["c", "s", "e"],
+            default="s" if debugger_state["mode"] == "step" else "c",
         )
 
-        settrace(trace_fn)  # Re-enable tracing
-
-        if command == "exit":
+        if command == "e":
             console.print(f"[yellow]{datetime.now()} dbgr: Exiting debugger")
             raise exit(0)
-        elif command == "step":
+        elif command == "s":
             console.print(f"[yellow]{datetime.now()} dbgr: Stepping into the next line")
             debugger_state["mode"] = "step"
-        elif command == "continue":
+        elif command == "c":
             console.print(f"[yellow]{datetime.now()} dbgr: Continuing execution")
             debugger_state["mode"] = "continue"
         else:
             console.print(f"[yellow]{datetime.now()} dbgr: Invalid command")
             raise exit(0)
 
+    settrace(trace_fn)  # Re-enable tracing
+
 
 def run_dbgr():
     # Set the global trace function to start debugging
+    stack = inspect.stack()
+    caller_frame = stack[1]
+    caller_file = caller_frame.filename
+    debugger_state["user_dir"] = Path(caller_file).parent
+
     settrace(global_trace)

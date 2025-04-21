@@ -27,7 +27,6 @@ def fun(z: int, mul: int) -> int:
 
 
 def main():
-    run_dbgr()
     result_a = fun(1, 2)
     result_b = fun(10, 20)
     print(result_a)
@@ -35,4 +34,5 @@ def main():
 
 
 if __name__ == "__main__":
+    run_dbgr()
     main()

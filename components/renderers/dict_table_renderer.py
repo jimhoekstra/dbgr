@@ -19,7 +19,11 @@ class DictTableRenderer:
         width = options.max_width
 
         table = Table(
-            highlight=True, box=SIMPLE, row_styles=["on grey11", ""], width=width
+            highlight=True,
+            box=SIMPLE,
+            row_styles=["on grey11", ""],
+            width=width,
+            style="white",
         )
 
         table.add_column("[grey50]key", style="cyan", justify="right")
