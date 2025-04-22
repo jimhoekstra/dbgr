@@ -1,7 +1,8 @@
 from rich.table import Table
 from rich.box import SIMPLE
 from rich.padding import Padding
-from rich.console import Console, RenderResult, ConsoleOptions
+from rich.console import Console, RenderResult, ConsoleOptions, Group
+from rich.text import Text
 
 
 class DictTableRenderer:
@@ -37,4 +38,8 @@ class DictTableRenderer:
                 Padding(v.__class__.__name__, (0, 0)),
             )
 
-        yield Padding(table, (0, 4))
+        if len(self.dict_to_render) == 0:
+            text = Text("No local variables", style="italic", justify="center")
+            yield Padding(Group(table, text), (0, 4))
+        else:
+            yield Padding(table, (0, 4))
