@@ -1,7 +1,7 @@
 from pathlib import Path
 from rich.syntax import Syntax
 from rich.panel import Panel
-from rich.console import Console, RenderResult, ConsoleOptions
+from rich.console import Console, RenderResult, ConsoleOptions, Group
 
 
 class SourceCodeRenderer:
@@ -9,11 +9,13 @@ class SourceCodeRenderer:
         self,
         path_to_file: Path,
         line_number: int,
+        title: str,
         max_lines: int = 20,
         border_color: str = "dark_blue",
     ) -> None:
         self.code = Path(path_to_file).read_text()
         self.line_number = line_number
+        self.title = title
         self.path_to_file = path_to_file
         self.max_lines = max_lines
         self.border_color = border_color
@@ -21,6 +23,7 @@ class SourceCodeRenderer:
     def __rich_console__(
         self, console: Console, options: ConsoleOptions
     ) -> RenderResult:
+        width = options.max_width
         height = options.height or options.size.height
         height = min(height, self.max_lines + 2)  # account for title and border
 
@@ -46,9 +49,9 @@ class SourceCodeRenderer:
         )
 
         yield Panel(
-            syntax,
+            Group(syntax, *["[bright_black]" + "/" * (width - 4)] * 5),
             border_style=f"bold {self.border_color}",
-            title=f"File: [underline]{self.path_to_file.name}",
+            title=self.title,
             height=height,
-            subtitle=f"{self.path_to_file}:{self.line_number}",
+            # subtitle=f"{self.path_to_file}:{self.line_number}",
         )
