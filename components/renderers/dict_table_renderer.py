@@ -47,7 +47,7 @@ class DictTableRenderer:
             )
 
         if len(self.dict_to_render) == 0:
-            text = Text("No local variables", style="italic", justify="center")
+            text = Text("No local variables", style="italic yellow", justify="center")
             yield Padding(Group(table, text), (0, 4))
         else:
             yield Padding(table, (0, 4))
