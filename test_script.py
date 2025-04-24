@@ -62,9 +62,6 @@ def main():
 
     print(result_a)
     print(result_b)
-    print(df)
-    print(long_string)
-
     dbgr()
 
 
