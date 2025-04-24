@@ -11,6 +11,7 @@ from datetime import datetime
 from rich.console import Console
 from rich.prompt import Prompt
 from rich.layout import Layout
+from rich import print as rich_print
 
 from components.renderers.source_code_renderer import SourceCodeRenderer
 from components.renderers.dict_table_renderer import DictTableRenderer
@@ -86,9 +87,13 @@ class Debugger:
         if event == "line":
             self.dbgr_trace(frame)
         elif event == "call":
-            print(f"dbgr: Function call {frame.f_code.co_name}")
+            rich_print(f"[yellow]{datetime.now()} dbgr: Function call {frame.f_code.co_name}")
+        elif event == "return":
+            rich_print(f"[yellow]{datetime.now()} dbgr: Function {frame.f_code.co_name} returned {arg}")
         else:
-            print(f"dbgr: Event {event} in {frame.f_code.co_name}")
+            pass
+        
+        # Continue tracing
         return self.local_trace
 
     def global_trace(self, frame, event, arg):
@@ -96,6 +101,7 @@ class Debugger:
             return self.global_trace  # Skip stepping into debugger code
 
         if event == "call":
+            rich_print(f"[yellow]{datetime.now()} dbgr: Stepping into function {frame.f_code.co_name}")
             self.dbgr_trace(frame)
             return self.local_trace
         return None

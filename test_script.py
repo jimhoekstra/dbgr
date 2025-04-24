@@ -1,7 +1,6 @@
 from dbgr import run_dbgr
 
 
-# breakpoint
 def fun(z: int, mul: int) -> int:
     """This is a function that adds 1 to the input value z and returns it.
 
@@ -27,6 +26,7 @@ def fun(z: int, mul: int) -> int:
 # breakpoint
 def main():
     result_a = fun(1, 2)
+    # breakpoint
     result_b = fun(10, 20)
     print(result_a)
     # breakpoint
