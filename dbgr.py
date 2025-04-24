@@ -1,4 +1,4 @@
-from sys import exit
+from sys import exit, settrace, gettrace
 from pathlib import Path
 from types import FrameType
 from enum import StrEnum
@@ -25,9 +25,13 @@ class DebuggerMode(StrEnum):
     EXIT = "exit"
 
 
-debugger_state = {
-    "mode": DebuggerMode.CONTINUE,
-}
+@dataclass
+class DebuggerState:
+    mode: DebuggerMode
+    user_dir: Path | None = None
+
+
+debugger_state = DebuggerState(DebuggerMode.CONTINUE)
 
 
 @dataclass
@@ -62,6 +66,9 @@ def is_user_frame(frame: FrameType, user_dir: Path) -> bool:
     if "<" in str(filename) and ">" in str(filename):
         return False
 
+    if "dbgr.py" in str(filename):
+        return False
+
     # Check that the file of the frame is in the user's directory
     if not filename.is_relative_to(user_dir):
         return False
@@ -76,8 +83,21 @@ def _get_frame_info(frame: FrameType) -> FrameInfo:
     return FrameInfo(filename, line_number)
 
 
+def global_trace(frame, event, arg):
+    if event == "call":
+        return local_trace  # Set a local trace for this function call
+    return None
+
+
+def local_trace(frame, event, arg):
+    if event == "line":
+        assert debugger_state.user_dir is not None
+        if is_user_frame(frame, debugger_state.user_dir):
+            debug_frame(frame, "Current Frame", 15)
+    return local_trace  # Keep tracing this frame
+
+
 def debug_frame(
-    # self,
     frame: FrameType,
     title: str,
     n_source_lines: int,
@@ -131,18 +151,20 @@ def debug_frame(
 
             if command == "e":
                 console.print(f"[yellow]{datetime.now()} dbgr: Exiting debugger")
-                debugger_state["mode"] = DebuggerMode.EXIT
+                debugger_state.mode = DebuggerMode.EXIT
                 exit_command = True
                 raise exit(0)
             elif command == "s":
                 console.print(
                     f"[yellow]{datetime.now()} dbgr: Stepping into the next line"
                 )
-                debugger_state["mode"] = DebuggerMode.STEP
+                debugger_state.mode = DebuggerMode.STEP
+                settrace(global_trace)
                 exit_command = True
             elif command == "c":
                 console.print(f"[yellow]{datetime.now()} dbgr: Continuing execution")
-                debugger_state["mode"] = DebuggerMode.CONTINUE
+                debugger_state.mode = DebuggerMode.CONTINUE
+                settrace(None)
                 exit_command = True
             elif command.startswith("d"):
                 df_name_to_display = command.split(" ")[1]
@@ -162,7 +184,16 @@ def debug_frame(
 
 def dbgr():
     """Run the debugger."""
+    current_trace = gettrace()
+    settrace(None)
+
     stack = inspect.stack()
     caller_frame = stack[1]
 
+    user_dir = Path(caller_frame.frame.f_code.co_filename).parent.resolve()
+    debugger_state.user_dir = user_dir
+
     debug_frame(caller_frame.frame, "Current Frame", 15)
+    new_trace = gettrace()
+    if new_trace is None:
+        settrace(current_trace)
