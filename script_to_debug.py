@@ -1,4 +1,23 @@
+import polars as pl
 from dbgr import run_dbgr
+
+
+def get_pl_df() -> pl.DataFrame:
+    """This function creates a polars DataFrame with some sample data.
+
+    Returns
+    -------
+    pl.DataFrame
+        A DataFrame containing sample data.
+    """
+    data = {
+        "City": ["New York", "Los Angeles", "Chicago"],
+        "Temperature": [85, 90, 78],
+        "Humidity": [70, 65, 80],
+        "Wind Speed": [10, 12, 8],
+    }
+    df = pl.DataFrame(data)
+    return df
 
 
 def fun(z: int, mul: int) -> int:
@@ -23,13 +42,15 @@ def fun(z: int, mul: int) -> int:
     return y
 
 
-# breakpoint
 def main():
     result_a = fun(1, 2)
-    # breakpoint
     result_b = fun(10, 20)
-    print(result_a)
     # breakpoint
+    df = get_pl_df()
+    # breakpoint
+    print(df)
+
+    print(result_a)
     print(result_b)
 
 

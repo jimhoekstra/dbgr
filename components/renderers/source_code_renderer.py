@@ -22,7 +22,7 @@ class SourceCodeRenderer:
         self, console: Console, options: ConsoleOptions
     ) -> RenderResult:
         width = options.max_width
-        
+
         height = options.height or options.size.height
         height = min(height, self.max_lines + 2)  # account for title and border
 

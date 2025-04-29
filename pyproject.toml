@@ -1,10 +1,11 @@
 [project]
-name = "dbgr"
+name = "terdious"
 version = "0.1.0"
-description = "Add your description here"
+description = "Tired of tedious debugging sessions? Make them terdious!"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "polars>=1.27.1",
     "rich>=14.0.0",
 ]
 
