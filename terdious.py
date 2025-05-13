@@ -83,41 +83,45 @@ def is_user_frame(frame: FrameType) -> bool:
 
 
 def terdious_print(text_to_print: str) -> None:
-    rich_print(
-        f"[yellow]{datetime.now()} terdious: {text_to_print}"
-    )
+    rich_print(f"[yellow]{datetime.now()} terdious: {text_to_print}")
 
 
 def local_trace(frame: FrameType, event, arg):
     if not is_user_frame(frame):
         return None
-        
+
     if event == "return" and debugger_state.print_fn_calls:
-        terdious_print(f"Function {frame.f_code.co_name} returned in {frame.f_code.co_filename}:{frame.f_lineno}")
+        terdious_print(
+            f"Function {frame.f_code.co_name} returned in {frame.f_code.co_filename}:{frame.f_lineno}"
+        )
     elif event == "line":
         if debugger_state.is_breakpoint(frame):
             debug_frame(frame)
             return local_trace
-    
+
     return local_trace
 
 
 def global_trace(frame: FrameType, event, arg):
     if not is_user_frame(frame):
         return None
-    
+
     if event == "call":
         if debugger_state.print_fn_calls:
-            terdious_print(f"Stepping into function {frame.f_code.co_name} in {frame.f_code.co_filename}:{frame.f_lineno}")
+            terdious_print(
+                f"Stepping into function {frame.f_code.co_name} in {frame.f_code.co_filename}:{frame.f_lineno}"
+            )
         return local_trace
-    
+
     return None
 
 
 def set_breakpoint():
     stack = inspect.stack()
     caller_frame = stack[1]
-    debugger_state.add_breakpoint(file_path=Path(caller_frame.filename), line_number=caller_frame.lineno+1)
+    debugger_state.add_breakpoint(
+        file_path=Path(caller_frame.filename), line_number=caller_frame.lineno + 1
+    )
 
 
 def debug_frame(frame: FrameType) -> None:
@@ -163,6 +167,4 @@ debugger_state.set_user_dir(Path(stack[-1].filename).parent)
 settrace(global_trace)
 
 
-terdious_print(
-    "[bold red]Terdious Debugger is running![/bold red]"
-)
+terdious_print("[bold red]Terdious Debugger is running![/bold red]")
