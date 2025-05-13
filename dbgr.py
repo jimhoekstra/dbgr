@@ -1,8 +1,11 @@
 from sys import exit, settrace, gettrace
+import sys
 from pathlib import Path
 from types import FrameType
 from enum import StrEnum
 from dataclasses import dataclass
+import runpy
+import threading
 
 from os import get_terminal_size
 import inspect
@@ -55,6 +58,9 @@ def is_user_frame(frame: FrameType) -> bool:
     """
     filename = Path(frame.f_code.co_filename).resolve()
 
+    if "<" in str(filename) and ">" in str(filename):
+        return False
+
     # This assumes that any code that is in the user's directory but in a .venv subdirectory
     # is not actually the user's code and should not be debugged.
     if ".venv" in str(filename):
@@ -87,23 +93,42 @@ class Debugger:
         if event == "line":
             self.dbgr_trace(frame)
         elif event == "call":
-            rich_print(f"[yellow]{datetime.now()} dbgr: Function call {frame.f_code.co_name}")
+            rich_print(
+                f"[yellow]{datetime.now()} dbgr: Function call {frame.f_code.co_name}"
+            )
         elif event == "return":
-            rich_print(f"[yellow]{datetime.now()} dbgr: Function {frame.f_code.co_name} returned {arg}")
+            rich_print(
+                f"[yellow]{datetime.now()} dbgr: Function {frame.f_code.co_name} returned"
+            )
         else:
             pass
-        
+
         # Continue tracing
         return self.local_trace
 
     def global_trace(self, frame, event, arg):
-        if not is_user_frame(frame):
-            return self.global_trace  # Skip stepping into debugger code
-
         if event == "call":
-            rich_print(f"[yellow]{datetime.now()} dbgr: Stepping into function {frame.f_code.co_name}")
-            self.dbgr_trace(frame)
-            return self.local_trace
+            if not is_user_frame(frame):
+                # rich_print(
+                #     f"[yellow]{datetime.now()} dbgr: Not stepping into function {frame.f_code.co_name}"
+                # )
+                return None
+            else:
+                rich_print(
+                    f"[yellow]{datetime.now()} dbgr: Stepping into function {frame.f_code.co_name}"
+                )
+                self.dbgr_trace(frame)
+                return self.local_trace
+    
+        return None
+
+    def is_user_code(self, frame: FrameType) -> bool:
+        filename = Path(frame.f_code.co_filename).resolve()
+        return filename.is_relative_to(self.user_dir)
+
+    def filtered_trace(self, frame, event, arg):
+        if is_user_frame(frame):
+            return self.global_trace(frame, event, arg)
         return None
 
     @staticmethod
@@ -201,3 +226,32 @@ def run_dbgr():
 
     # Set the global trace function to start debugging
     settrace(dbgr.global_trace)
+
+
+def dummy_trace(frame: FrameType, event, arg):
+    pass
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python dbgr.py <script_to_debug.py>")
+        exit(1)
+
+    script_path = Path(sys.argv[1]).resolve()
+    if not script_path.exists():
+        print(f"Script {script_path} does not exist.")
+        exit(1)
+
+    # Set the user directory to the script's directory
+    debugger_state["user_dir"] = script_path.parent
+    dbgr = Debugger(debugger_state["user_dir"])
+
+    settrace(dbgr.filtered_trace)
+    threading.settrace(dummy_trace)
+
+    # Run the script with the debugger
+    runpy.run_path(str(script_path), run_name="__main__")
+
+
+if __name__ == "__main__":
+    main()

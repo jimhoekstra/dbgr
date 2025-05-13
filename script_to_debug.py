@@ -1,5 +1,6 @@
 import polars as pl
-from dbgr import run_dbgr
+from subscript_to_debug import test_sub_script
+import terdious
 
 
 def get_pl_df() -> pl.DataFrame:
@@ -35,25 +36,21 @@ def fun(z: int, mul: int) -> int:
     int
         The incremented value.
     """
+    terdious.set_breakpoint()
     y: int = z + 1
     z = 0
     for i in range(3):
         y = y * mul
+
+    test_sub_script()
     return y
 
 
 def main():
     result_a = fun(1, 2)
     result_b = fun(10, 20)
-    # breakpoint
     df = get_pl_df()
-    # breakpoint
-    print(df)
-
-    print(result_a)
-    print(result_b)
 
 
 if __name__ == "__main__":
-    run_dbgr()
     main()

@@ -48,7 +48,7 @@ class SourceCodeRenderer:
         )
 
         yield Panel(
-            Group(syntax, *["[bright_black]" + "/" * (width - 4)] * 5),
+            Group(syntax, *["[bright_black]" + "/" * (width - 4)] * 2),
             border_style=f"bold {self.border_color}",
             title=f"File: [underline]{self.path_to_file.name}",
             height=height,
