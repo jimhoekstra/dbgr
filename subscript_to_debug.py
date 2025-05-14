@@ -1,6 +1,8 @@
 import terdious
 
+terdious.enable_debugger()
+
 
 def test_sub_script():
-    terdious.set_breakpoint()
+    terdious.breakpoint()
     print("hello world!")

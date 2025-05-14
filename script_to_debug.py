@@ -36,7 +36,6 @@ def fun(z: int, mul: int) -> int:
     int
         The incremented value.
     """
-    terdious.set_breakpoint()
     y: int = z + 1
     z = 0
     for i in range(3):
@@ -50,6 +49,7 @@ def main():
     result_a = fun(1, 2)
     result_b = fun(10, 20)
     df = get_pl_df()
+    terdious.breakpoint()
 
 
 if __name__ == "__main__":

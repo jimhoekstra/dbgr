@@ -19,27 +19,62 @@ class DictTableRenderer:
     ) -> RenderResult:
         width = options.max_width
 
+        padding = 4
+        table_padding = 2 * 3 + 2
+        width = width - (padding * 2 + table_padding)
+
         table = Table(
             highlight=True,
             box=SIMPLE,
-            row_styles=["on grey11", ""],
+            row_styles=["on grey7", ""],
             width=width,
             style="white",
         )
 
-        table.add_column("[grey50]key", style="cyan", justify="right")
-        table.add_column("[grey50]value", justify="left")
-        table.add_column("[grey50]type", style="magenta italic")
+        key_width = width // 6
+        value_width = width // 3 * 2
+
+        table.add_column(
+            "[grey50]key",
+            style="cyan",
+            justify="right",
+            max_width=key_width,
+            min_width=key_width,
+        )
+        table.add_column(
+            "[grey50]type",
+            style="magenta italic",
+            max_width=key_width,
+            min_width=key_width,
+        )
+        table.add_column(
+            "[grey50]value",
+            justify="left",
+            max_width=value_width,
+            min_width=value_width,
+        )
 
         for k, v in self.dict_to_render.items():
+            display_key = k
+            if len(display_key) > (key_width - 3):
+                display_key = display_key[: key_width - 3] + "..."
+
+            display_type = v.__class__.__name__
+            if len(display_type) > (key_width - 3):
+                display_type = display_type[: key_width - 3] + "..."
+
+            display_value = repr(v).replace("\n", "\\n")
+            if len(display_value) > (value_width - 3):
+                display_value = display_value[: value_width - 3] + "..."
+
             table.add_row(
                 Padding(k, (0, 0)),
-                Padding(repr(v), (0, 0)),
                 Padding(v.__class__.__name__, (0, 0)),
+                Padding(display_value, (0, 0)),
             )
 
         if len(self.dict_to_render) == 0:
             text = Text("No local variables", style="italic", justify="center")
-            yield Padding(Group(table, text), (0, 4))
+            yield Padding(Group(table, text), (0, padding))
         else:
-            yield Padding(table, (0, 4))
+            yield Padding(table, (0, padding))
