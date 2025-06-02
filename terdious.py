@@ -101,7 +101,7 @@ def local_trace(frame: FrameType, event, arg):
 
     if event == "return" and debugger_state.print_fn_calls:
         terdious_print(
-            f"Function {frame.f_code.co_name} returned in "
+            f"Function [bold green]{frame.f_code.co_name}[/bold green] returned in "
             f"{frame.f_code.co_filename}:{frame.f_lineno}"
         )
     elif event == "line":
@@ -162,16 +162,24 @@ def debug_frame(frame: FrameType) -> None:
     layout["left"].update(syntax)
     layout["right"].update(locals_table)
     console.print(layout)
-    response = Prompt.ask()
 
-    if response == "q" or response == "quit":
-        terdious_print("[bold red]Exiting debugger.[/bold red]")
-        exit(0)
-    elif response == "d" or response == "disable":
-        debugger_state.disable_breakpoint(
-            file_path=Path(frame.f_code.co_filename), line_number=frame.f_lineno
-        )
-        terdious_print("[bold red]Breakpoint disabled.[/bold red]")
+    continue_debugging = True
+    while continue_debugging:
+        response = Prompt.ask()
+        if response == "q" or response == "quit":
+            terdious_print("[bold red]Exiting debugger.[/bold red]")
+            continue_debugging = False
+            exit(0)
+        elif response.startswith("p "):
+            var_name = response[2:].strip()
+            if var_name in frame.f_locals:
+                value = frame.f_locals[var_name]
+                rich_print(value)
+            else:
+                terdious_print(f"[bold red]Variable '{var_name}' not found.[/bold red]")
+        elif response == "c" or response == "continue":
+            terdious_print("[bold green]Continuing execution...[/bold green]")
+            continue_debugging = False
 
     settrace(trace)
 
