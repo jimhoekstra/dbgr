@@ -9,6 +9,7 @@ from rich import print as rich_print
 from rich.console import Console
 from rich.prompt import Prompt
 from rich.layout import Layout
+from rich.panel import Panel
 
 from components.renderers.source_code_renderer import SourceCodeRenderer
 from components.renderers.dict_table_renderer import DictTableRenderer
@@ -174,7 +175,7 @@ def debug_frame(frame: FrameType) -> None:
             var_name = response[2:].strip()
             if var_name in frame.f_locals:
                 value = frame.f_locals[var_name]
-                rich_print(value)
+                rich_print(Panel(value))
             else:
                 terdious_print(f"[bold red]Variable '{var_name}' not found.[/bold red]")
         elif response == "c" or response == "continue":
